@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Food diary">
+<title>Food &amp; water diary</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#fff;--bg2:#f5f5f5;--bg3:#ebebeb;
+    --text:#111;--text2:#666;--text3:#aaa;
+    --border:rgba(0,0,0,0.12);--border2:rgba(0,0,0,0.22);
+    --blue:#185FA5;--blue-bg:#E6F1FB;--blue-text:#0C447C;
+    --danger:#E24B4A;
+    --radius:8px;--radius-lg:12px;
+    --font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  }
+  @media(prefers-color-scheme:dark){
+    :root{
+      --bg:#1c1c1e;--bg2:#2c2c2e;--bg3:#3a3a3c;
+      --text:#f2f2f7;--text2:#aeaeb2;--text3:#636366;
+      --border:rgba(255,255,255,0.12);--border2:rgba(255,255,255,0.22);
+      --blue:#85B7EB;--blue-bg:#0C447C;--blue-text:#B5D4F4;
+    }
+  }
+  body{font-family:var(--font);background:var(--bg2);color:var(--text);min-height:100vh;}
+  .app{max-width:480px;margin:0 auto;padding:1rem;padding-bottom:3rem;}
+  .header{text-align:center;padding:0.75rem 0 1.25rem;}
+  .header h1{font-size:22px;font-weight:600;color:var(--text);}
+  .header p{font-size:13px;color:var(--text2);margin-top:3px;}
+  .view-tabs{display:flex;gap:4px;margin-bottom:1rem;background:var(--bg3);border-radius:var(--radius);padding:3px;}
+  .view-tab{flex:1;text-align:center;padding:7px 4px;font-size:13px;font-weight:500;cursor:pointer;border-radius:6px;color:var(--text2);border:none;background:none;}
+  .view-tab.active{background:var(--bg);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.12);}
+  .date-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
+  .date-nav button{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);font-size:20px;cursor:pointer;color:var(--text2);padding:4px 14px;line-height:1.4;}
+  .date-nav span{font-size:14px;font-weight:500;color:var(--text);text-align:center;flex:1;margin:0 8px;}
+  .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:1.25rem;}
+  .stat{background:var(--bg);border-radius:var(--radius);padding:10px 6px;text-align:center;border:0.5px solid var(--border);}
+  .stat-val{font-size:17px;font-weight:600;color:var(--text);}
+  .stat-lbl{font-size:11px;color:var(--text2);margin-top:2px;}
+  .stat.water .stat-val{color:var(--blue);}
+  .card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1.25rem;}
+  .card h2{font-size:15px;font-weight:600;margin-bottom:10px;color:var(--text);}
+  .form-tabs{display:flex;gap:6px;margin-bottom:10px;}
+  .form-tab{padding:5px 14px;font-size:13px;cursor:pointer;border-radius:var(--radius);border:0.5px solid var(--border);background:none;color:var(--text2);font-family:var(--font);}
+  .form-tab.active{background:var(--bg2);color:var(--text);border-color:var(--border2);}
+  .food-inputs,.water-inputs{display:none;flex-direction:column;gap:8px;}
+  .food-inputs.show,.water-inputs.show{display:flex;}
+  input,select{width:100%;padding:9px 10px;font-size:14px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-family:var(--font);-webkit-appearance:none;appearance:none;}
+  input:focus,select:focus{outline:none;border-color:var(--blue);}
+  .row3{display:grid;grid-template-columns:1fr 72px 72px;gap:8px;}
+  .row2{display:grid;grid-template-columns:1fr 72px;gap:8px;}
+  .water-presets{display:flex;gap:6px;flex-wrap:wrap;}
+  .water-presets button{padding:7px 11px;font-size:13px;cursor:pointer;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--blue-bg);color:var(--blue-text);font-family:var(--font);font-weight:500;}
+  .btn-primary{width:100%;padding:10px;font-size:14px;font-weight:500;cursor:pointer;border-radius:var(--radius);border:none;background:var(--text);color:var(--bg);font-family:var(--font);margin-top:4px;}
+  .btn-primary:active{opacity:0.85;}
+  .section-lbl{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;margin:12px 0 6px;}
+  .entry{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;}
+  .entry-name{font-size:14px;font-weight:500;color:var(--text);}
+  .entry-meta{font-size:12px;color:var(--text2);margin-top:2px;}
+  .entry-cal{font-size:15px;font-weight:600;color:var(--text);white-space:nowrap;}
+  .entry-water-val{font-size:15px;font-weight:600;color:var(--blue);}
+  .del-btn{background:none;border:none;cursor:pointer;color:var(--text3);font-size:18px;padding:0 0 0 10px;line-height:1;flex-shrink:0;}
+  .del-btn:active{color:var(--danger);}
+  .empty{text-align:center;color:var(--text3);font-size:14px;padding:2rem 0;}
+  .rollup-day{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:8px;}
+  .rollup-date{font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px;}
+  .rollup-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;}
+  .rollup-cell{font-size:11px;color:var(--text2);}
+  .rollup-cell span{display:block;font-size:13px;font-weight:600;color:var(--text);margin-top:1px;}
+  .rollup-cell.wc span{color:var(--blue);}
+  .today-hl{border-color:var(--blue) !important;}
+  .stats-label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>&#127825; Food &amp; water diary</h1>
+    <p>Daily tracking · weekly &amp; monthly rollups</p>
+  </div>
+
+  <div class="view-tabs">
+    <button class="view-tab active" onclick="setView('day',this)">Day</button>
+    <button class="view-tab" onclick="setView('week',this)">Week</button>
+    <button class="view-tab" onclick="setView('month',this)">Month</button>
+  </div>
+
+  <div id="dayView">
+    <div class="date-nav">
+      <button onclick="changeDay(-1)">&#8249;</button>
+      <span id="dateLabel"></span>
+      <button onclick="changeDay(1)">&#8250;</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val" id="dCal">0</div><div class="stat-lbl">Calories</div></div>
+      <div class="stat"><div class="stat-val" id="dPro">0g</div><div class="stat-lbl">Protein</div></div>
+      <div class="stat"><div class="stat-val" id="dCarb">0g</div><div class="stat-lbl">Carbs</div></div>
+      <div class="stat water"><div class="stat-val" id="dWater">0ml</div><div class="stat-lbl">Water</div></div>
+    </div>
+    <div class="card">
+      <h2>Add entry</h2>
+      <div class="form-tabs">
+        <button class="form-tab active" onclick="switchFormTab('food',this)">&#127837; Food</button>
+        <button class="form-tab" onclick="switchFormTab('water',this)">&#128167; Water</button>
+      </div>
+      <div class="food-inputs show" id="foodInputs">
+        <select id="mealType">
+          <option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snack</option>
+        </select>
+        <div class="row3">
+          <input type="text" id="foodName" placeholder="Food name" autocomplete="off" />
+          <input type="number" id="calories" placeholder="Cal" min="0" inputmode="decimal" />
+          <input type="number" id="protein" placeholder="P (g)" min="0" inputmode="decimal" />
+        </div>
+        <div class="row2">
+          <input type="number" id="carbs" placeholder="Carbs (g)" min="0" inputmode="decimal" />
+          <input type="number" id="servings" placeholder="Qty" min="0.5" step="0.5" value="1" inputmode="decimal" />
+        </div>
+        <button class="btn-primary" onclick="addFood()">+ Add food</button>
+      </div>
+      <div class="water-inputs" id="waterInputs">
+        <div class="water-presets">
+          <button onclick="quickWater(250)">250ml</button>
+          <button onclick="quickWater(330)">330ml</button>
+          <button onclick="quickWater(500)">500ml</button>
+          <button onclick="quickWater(600)">600ml</button>
+          <button onclick="quickWater(750)">750ml</button>
+          <button onclick="quickWater(1000)">1L</button>
+        </div>
+        <div class="row2">
+          <input type="number" id="waterAmt" placeholder="Custom amount (ml)" min="0" step="50" inputmode="decimal" />
+          <button class="btn-primary" style="margin-top:0;" onclick="addWater()">+ Add</button>
+        </div>
+      </div>
+    </div>
+    <div id="dayEntries"></div>
+  </div>
+
+  <div id="weekView" style="display:none;">
+    <div class="date-nav">
+      <button onclick="changeWeek(-1)">&#8249;</button>
+      <span id="weekLabel"></span>
+      <button onclick="changeWeek(1)">&#8250;</button>
+    </div>
+    <div class="stats-label">Weekly totals</div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val" id="wCal">0</div><div class="stat-lbl">Calories</div></div>
+      <div class="stat"><div class="stat-val" id="wPro">0g</div><div class="stat-lbl">Protein</div></div>
+      <div class="stat"><div class="stat-val" id="wCarb">0g</div><div class="stat-lbl">Carbs</div></div>
+      <div class="stat water"><div class="stat-val" id="wWater">0L</div><div class="stat-lbl">Water</div></div>
+    </div>
+    <div class="stats-label">Daily averages</div>
+    <div class="stats" style="margin-bottom:1.5rem;">
+      <div class="stat"><div class="stat-val" id="wAvgCal">0</div><div class="stat-lbl">Avg cal</div></div>
+      <div class="stat"><div class="stat-val" id="wAvgPro">0g</div><div class="stat-lbl">Avg protein</div></div>
+      <div class="stat"><div class="stat-val" id="wAvgCarb">0g</div><div class="stat-lbl">Avg carbs</div></div>
+      <div class="stat water"><div class="stat-val" id="wAvgWater">0ml</div><div class="stat-lbl">Avg water</div></div>
+    </div>
+    <div class="section-lbl">Daily breakdown</div>
+    <div id="weekDays"></div>
+  </div>
+
+  <div id="monthView" style="display:none;">
+    <div class="date-nav">
+      <button onclick="changeMonth(-1)">&#8249;</button>
+      <span id="monthLabel"></span>
+      <button onclick="changeMonth(1)">&#8250;</button>
+    </div>
+    <div class="stats-label">Monthly totals</div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val" id="mCal">0</div><div class="stat-lbl">Calories</div></div>
+      <div class="stat"><div class="stat-val" id="mPro">0g</div><div class="stat-lbl">Protein</div></div>
+      <div class="stat"><div class="stat-val" id="mCarb">0g</div><div class="stat-lbl">Carbs</div></div>
+      <div class="stat water"><div class="stat-val" id="mWater">0L</div><div class="stat-lbl">Water</div></div>
+    </div>
+    <div class="stats-label">Daily averages</div>
+    <div class="stats" style="margin-bottom:1.5rem;">
+      <div class="stat"><div class="stat-val" id="mAvgCal">0</div><div class="stat-lbl">Avg cal</div></div>
+      <div class="stat"><div class="stat-val" id="mAvgPro">0g</div><div class="stat-lbl">Avg protein</div></div>
+      <div class="stat"><div class="stat-val" id="mAvgCarb">0g</div><div class="stat-lbl">Avg carbs</div></div>
+      <div class="stat water"><div class="stat-val" id="mAvgWater">0ml</div><div class="stat-lbl">Avg water</div></div>
+    </div>
+    <div class="section-lbl">Daily breakdown (logged days only)</div>
+    <div id="monthDays"></div>
+  </div>
+</div>
+
+<script>
+const LS_KEY = 'foodDiaryV2';
+let currentDate = new Date(); currentDate.setHours(0,0,0,0);
+let weekOffset = 0, monthOffset = 0, activeView = 'day';
+
+function dateKey(d){ return d.toISOString().split('T')[0]; }
+
+function getData(){
+  try{ const r=localStorage.getItem(LS_KEY); return r?JSON.parse(r):{}; }
+  catch(e){ return {}; }
+}
+function saveData(d){
+  try{ localStorage.setItem(LS_KEY,JSON.stringify(d)); }
+  catch(e){ alert('Storage full — try clearing some old data.'); }
+}
+
+function fmtWater(ml){
+  if(ml>=1000) return (Math.round(ml/100)/10).toFixed(1)+'L';
+  return ml+'ml';
+}
+
+function fmtDateLabel(d){
+  const t=new Date(); t.setHours(0,0,0,0);
+  const diff=(d-t)/86400000;
+  const short={month:'short',day:'numeric'};
+  if(diff===0) return 'Today · '+d.toLocaleDateString('en-AU',short);
+  if(diff===-1) return 'Yesterday · '+d.toLocaleDateString('en-AU',short);
+  return d.toLocaleDateString('en-AU',{weekday:'short',month:'short',day:'numeric'});
+}
+
+function setView(v,el){
+  activeView=v;
+  document.querySelectorAll('.view-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  ['dayView','weekView','monthView'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById(v+'View').style.display='block';
+  render();
+}
+
+function switchFormTab(tab,el){
+  document.querySelectorAll('.form-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('foodInputs').classList.toggle('show',tab==='food');
+  document.getElementById('waterInputs').classList.toggle('show',tab==='water');
+}
+
+function changeDay(n){ currentDate=new Date(currentDate.getTime()+n*86400000); render(); }
+function changeWeek(n){ weekOffset+=n; render(); }
+function changeMonth(n){ monthOffset+=n; render(); }
+
+function getDayData(d){
+  const data=getData(); const key=dateKey(d);
+  const day=data[key]||{food:[],water:[]};
+  return { food: day.food||[], water: day.water||[] };
+}
+
+function getDayTotals(d){
+  const {food,water}=getDayData(d);
+  return {
+    cal: food.reduce((s,e)=>s+e.cal,0),
+    prot: Math.round(food.reduce((s,e)=>s+e.prot,0)*10)/10,
+    carb: Math.round(food.reduce((s,e)=>s+e.carb,0)*10)/10,
+    water: water.reduce((s,e)=>s+e.ml,0),
+    hasData: food.length>0||water.length>0,
+    food, waterEntries: water
+  };
+}
+
+function addFood(){
+  const name=document.getElementById('foodName').value.trim();
+  if(!name){ document.getElementById('foodName').focus(); return; }
+  const cal=parseFloat(document.getElementById('calories').value)||0;
+  const prot=parseFloat(document.getElementById('protein').value)||0;
+  const carb=parseFloat(document.getElementById('carbs').value)||0;
+  const qty=parseFloat(document.getElementById('servings').value)||1;
+  const meal=document.getElementById('mealType').value;
+  const data=getData(); const key=dateKey(currentDate);
+  if(!data[key]) data[key]={food:[],water:[]};
+  if(!data[key].food) data[key].food=[];
+  data[key].food.push({id:Date.now(),name,meal,cal:Math.round(cal*qty),prot:Math.round(prot*qty*10)/10,carb:Math.round(carb*qty*10)/10,qty});
+  saveData(data);
+  ['foodName','calories','protein','carbs'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('servings').value='1';
+  render();
+}
+
+function quickWater(ml){ document.getElementById('waterAmt').value=ml; addWater(); }
+
+function addWater(){
+  const ml=parseFloat(document.getElementById('waterAmt').value)||0;
+  if(!ml){ document.getElementById('waterAmt').focus(); return; }
+  const data=getData(); const key=dateKey(currentDate);
+  if(!data[key]) data[key]={food:[],water:[]};
+  if(!data[key].water) data[key].water=[];
+  data[key].water.push({id:Date.now(),ml:Math.round(ml)});
+  saveData(data);
+  document.getElementById('waterAmt').value='';
+  render();
+}
+
+function deleteFood(id){
+  const data=getData(); const key=dateKey(currentDate);
+  if(data[key]&&data[key].food) data[key].food=data[key].food.filter(e=>e.id!==id);
+  saveData(data); render();
+}
+
+function deleteWater(id){
+  const data=getData(); const key=dateKey(currentDate);
+  if(data[key]&&data[key].water) data[key].water=data[key].water.filter(e=>e.id!==id);
+  saveData(data); render();
+}
+
+function renderDay(){
+  document.getElementById('dateLabel').textContent=fmtDateLabel(currentDate);
+  const t=getDayTotals(currentDate);
+  document.getElementById('dCal').textContent=t.cal;
+  document.getElementById('dPro').textContent=Math.round(t.prot)+'g';
+  document.getElementById('dCarb').textContent=Math.round(t.carb)+'g';
+  document.getElementById('dWater').textContent=fmtWater(t.water);
+  const meals=['Breakfast','Lunch','Dinner','Snack'];
+  let html='';
+  meals.forEach(meal=>{
+    const group=t.food.filter(e=>e.meal===meal);
+    if(!group.length) return;
+    html+=`<div class="section-lbl">${meal}</div>`;
+    group.forEach(e=>{
+      html+=`<div class="entry"><div style="flex:1;min-width:0;"><div class="entry-name">${e.name}</div><div class="entry-meta">P: ${e.prot}g · C: ${e.carb}g${e.qty!==1?' · ×'+e.qty:''}</div></div><div style="display:flex;align-items:center;gap:4px;flex-shrink:0;"><div class="entry-cal">${e.cal} cal</div><button class="del-btn" onclick="deleteFood(${e.id})" aria-label="Delete">×</button></div></div>`;
+    });
+  });
+  if(t.waterEntries&&t.waterEntries.length){
+    html+=`<div class="section-lbl">Water</div>`;
+    t.waterEntries.forEach(e=>{
+      html+=`<div class="entry"><div class="entry-water-val">💧 ${e.ml}ml</div><button class="del-btn" onclick="deleteWater(${e.id})" aria-label="Delete">×</button></div>`;
+    });
+  }
+  if(!html) html='<div class="empty">📋 Nothing logged yet</div>';
+  document.getElementById('dayEntries').innerHTML=html;
+}
+
+function getWeekDates(){
+  const today=new Date(); today.setHours(0,0,0,0);
+  const dow=today.getDay(); const mon=new Date(today);
+  mon.setDate(today.getDate()-((dow+6)%7)+weekOffset*7);
+  const days=[];
+  for(let i=0;i<7;i++){ const d=new Date(mon); d.setDate(mon.getDate()+i); days.push(d); }
+  return days;
+}
+
+function renderWeek(){
+  const days=getWeekDates();
+  const fmt={month:'short',day:'numeric'};
+  document.getElementById('weekLabel').textContent=days[0].toLocaleDateString('en-AU',fmt)+' – '+days[6].toLocaleDateString('en-AU',fmt);
+  let totCal=0,totP=0,totC=0,totW=0,logged=0,html='';
+  const todayKey=dateKey(new Date());
+  days.forEach(d=>{
+    const t=getDayTotals(d);
+    if(t.hasData){ logged++; totCal+=t.cal; totP+=t.prot; totC+=t.carb; totW+=t.water; }
+    const isToday=dateKey(d)===todayKey;
+    html+=`<div class="rollup-day${isToday?' today-hl':''}">
+      <div class="rollup-date">${d.toLocaleDateString('en-AU',{weekday:'short',month:'short',day:'numeric'})}${isToday?' · today':''}</div>
+      <div class="rollup-row">
+        <div class="rollup-cell">Calories<span>${t.cal}</span></div>
+        <div class="rollup-cell">Protein<span>${Math.round(t.prot)}g</span></div>
+        <div class="rollup-cell">Carbs<span>${Math.round(t.carb)}g</span></div>
+        <div class="rollup-cell wc">Water<span>${fmtWater(t.water)}</span></div>
+      </div></div>`;
+  });
+  const n=logged||1;
+  document.getElementById('wCal').textContent=totCal;
+  document.getElementById('wPro').textContent=Math.round(totP)+'g';
+  document.getElementById('wCarb').textContent=Math.round(totC)+'g';
+  document.getElementById('wWater').textContent=fmtWater(totW);
+  document.getElementById('wAvgCal').textContent=Math.round(totCal/n);
+  document.getElementById('wAvgPro').textContent=Math.round(totP/n)+'g';
+  document.getElementById('wAvgCarb').textContent=Math.round(totC/n)+'g';
+  document.getElementById('wAvgWater').textContent=fmtWater(Math.round(totW/n));
+  document.getElementById('weekDays').innerHTML=html;
+}
+
+function renderMonth(){
+  const today=new Date();
+  const y=today.getFullYear(), m=today.getMonth()+monthOffset;
+  const first=new Date(y,m,1), last=new Date(y,m+1,0);
+  document.getElementById('monthLabel').textContent=first.toLocaleDateString('en-AU',{month:'long',year:'numeric'});
+  let totCal=0,totP=0,totC=0,totW=0,logged=0,html='';
+  const todayKey=dateKey(new Date());
+  for(let d=new Date(first);d<=last;d.setDate(d.getDate()+1)){
+    const t=getDayTotals(new Date(d));
+    if(!t.hasData) continue;
+    logged++; totCal+=t.cal; totP+=t.prot; totC+=t.carb; totW+=t.water;
+    const isToday=dateKey(new Date(d))===todayKey;
+    html+=`<div class="rollup-day${isToday?' today-hl':''}">
+      <div class="rollup-date">${new Date(d).toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'})}${isToday?' · today':''}</div>
+      <div class="rollup-row">
+        <div class="rollup-cell">Calories<span>${t.cal}</span></div>
+        <div class="rollup-cell">Protein<span>${Math.round(t.prot)}g</span></div>
+        <div class="rollup-cell">Carbs<span>${Math.round(t.carb)}g</span></div>
+        <div class="rollup-cell wc">Water<span>${fmtWater(t.water)}</span></div>
+      </div></div>`;
+  }
+  if(!html) html='<div class="empty">No data logged this month</div>';
+  const n=logged||1;
+  document.getElementById('mCal').textContent=totCal;
+  document.getElementById('mPro').textContent=Math.round(totP)+'g';
+  document.getElementById('mCarb').textContent=Math.round(totC)+'g';
+  document.getElementById('mWater').textContent=fmtWater(totW);
+  document.getElementById('mAvgCal').textContent=Math.round(totCal/n);
+  document.getElementById('mAvgPro').textContent=Math.round(totP/n)+'g';
+  document.getElementById('mAvgCarb').textContent=Math.round(totC/n)+'g';
+  document.getElementById('mAvgWater').textContent=fmtWater(Math.round(totW/n));
+  document.getElementById('monthDays').innerHTML=html;
+}
+
+function render(){
+  if(activeView==='day') renderDay();
+  else if(activeView==='week') renderWeek();
+  else renderMonth();
+}
+
+render();
+</script>
+</body>
+</html>
